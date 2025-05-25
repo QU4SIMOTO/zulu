@@ -35,7 +35,7 @@ impl Printer {
         self: &mut Self,
         loc: UploadLocation,
         file: P,
-        dest: String,
+        dest: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let data = fs::read(file.as_ref())?;
         let size = data.len();

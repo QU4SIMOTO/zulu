@@ -1,4 +1,5 @@
 use clap::{Subcommand, ValueEnum};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum UploadLocation {
@@ -27,14 +28,16 @@ pub enum UploadCommand {
         #[arg(short, long, value_enum, default_value_t = UploadLocation::B)]
         loc: UploadLocation,
         /// The path of the the file to upload.
-        #[arg(short, long, value_name = "FILE")]
-        file: std::path::PathBuf,
+        file: PathBuf,
         /// The destinication filename to write to on the device eg. HTTPC_CA.NRD.
         dest: String,
     },
     Ssl {
-        ca: String,
-        cert: String,
-        key: String,
+        /// Path to CA file.
+        ca: PathBuf,
+        /// Path to crt file.
+        cert: PathBuf,
+        /// Path to key file.
+        key: PathBuf,
     },
 }
