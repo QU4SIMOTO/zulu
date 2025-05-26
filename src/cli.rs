@@ -6,24 +6,36 @@ use clap::{Parser, Subcommand};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug)]
+#[command(
+    name = "Zebra Utilities for Linux Users",
+    version = "0.0.0",
+    about = "A small cli to make interacting with zebra printers on linux slightly less annoying."
+)]
 pub struct Cli {
     /// The address of the printer.
     #[arg(long)]
     #[clap(default_value = "192.168.0.40:9100")]
     pub addr: SocketAddr,
-    /// Timeout in seconds.
+    /// Timeout in seconds for network operations.
     #[arg(long, short)]
     #[clap(default_value_t = 5)]
     pub timeout: u64,
+    /// The subcommand to execute.
     #[command(subcommand)]
     pub command: Command,
 }
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
+    #[command(about = "Get a configuration value by key.")]
     Get(SdgGet),
+    #[command(about = "Set a configuration value by key.")]
     Set(SdgSet),
+    #[command(about = "Perform an action by name.")]
     Do(SdgDo),
-    #[command(subcommand)]
+    #[command(
+        subcommand,
+        about = "Upload files such as firmware, certificates or keys."
+    )]
     Upload(UploadCommand),
 }
