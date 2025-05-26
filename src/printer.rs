@@ -20,23 +20,6 @@ impl Printer {
         }
     }
 
-    /*
-    pub fn run_sdg(self: &mut Self, command: SdgCommand) -> Result<(), Error> {
-        self.write_bytes(&command.to_string().into_bytes())?;
-        if let SdgCommand::Get { .. } = command {
-            let response = self.read_bytes()?;
-
-            if response.len() > 0 {
-                println!("{}", String::from_utf8_lossy(&response).replace('"', ""));
-            }
-        }
-        Ok(())
-    }
-
-    pub fn run_zpl(self: &mut Self, zpl: impl IntoZpl) -> Result<(), Error> {
-        Ok(self.write_bytes(&zpl.into_zpl()?)?)
-    }
-    */
     pub fn write_bytes(self: &mut Self, bs: &[u8]) -> Result<(), Error> {
         let stream = self.get_stream()?;
 
