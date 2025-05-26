@@ -2,37 +2,28 @@ use clap::Parser;
 use zulu::{
     cli::{Cli, Command},
     printer::Printer,
-    sdg::SdgCommand,
-    upload::{UploadCommand, UploadLocation},
+    upload::UploadCommand,
+    Error, IntoSgd, IntoZpl,
 };
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Error> {
     let cli = Cli::parse();
 
     let mut printer = Printer::new(cli.addr, cli.timeout);
     match cli.command {
-        Command::Sdg(c) => printer.run_sdg(c),
+        Command::Get(c) => {
+            printer.write_bytes(&c.into_sgd())?;
+            let response = printer.read_bytes()?;
+            if response.len() > 0 {
+                println!("{}", String::from_utf8_lossy(&response).replace('"', ""));
+            }
+            Ok(())
+        }
+        Command::Set(c) => printer.write_bytes(&c.into_sgd()),
+        Command::Do(c) => printer.write_bytes(&c.into_sgd()),
         Command::Upload(c) => match c {
-            UploadCommand::File { loc, file, dest } => {
-                printer.upload_file(loc, file, dest.as_str())
-            }
-            UploadCommand::Ssl { ca, cert, key } => {
-                printer.upload_file(UploadLocation::B, ca, "HTTPS_CA.NRD")?;
-                printer.upload_file(UploadLocation::B, cert, "HTTPS_CERT.NRD")?;
-                printer.upload_file(UploadLocation::B, key, "HTTPS_KEY.NRD")?;
-                printer.run_sdg(SdgCommand::Set {
-                    key: "ip.http.enable".into(),
-                    value: "on".into(),
-                })?;
-                printer.run_sdg(SdgCommand::Set {
-                    key: "ip.http.port".into(),
-                    value: "443".into(),
-                })?;
-                printer.run_sdg(SdgCommand::Do {
-                    key: "device.reset".into(),
-                    value: None,
-                })
-            }
+            UploadCommand::File(c) => printer.write_bytes(&c.into_zpl()?),
+            UploadCommand::Ssl(c) => printer.write_bytes(&c.into_zpl()?),
         },
     }
 }

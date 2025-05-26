@@ -1,9 +1,7 @@
-use crate::{sdg::SdgCommand, upload::UploadLocation};
+use crate::Error;
 use std::{
-    fs,
     io::{Read, Write},
     net::{SocketAddr, TcpStream},
-    path::Path,
     time::Duration,
 };
 
@@ -22,43 +20,24 @@ impl Printer {
         }
     }
 
-    pub fn run_sdg(self: &mut Self, command: SdgCommand) -> Result<(), Box<dyn std::error::Error>> {
+    /*
+    pub fn run_sdg(self: &mut Self, command: SdgCommand) -> Result<(), Error> {
         self.write_bytes(&command.to_string().into_bytes())?;
-        let response = self.read_bytes()?;
-        if response.len() > 0 {
-            println!("{}", String::from_utf8_lossy(&response));
+        if let SdgCommand::Get { .. } = command {
+            let response = self.read_bytes()?;
+
+            if response.len() > 0 {
+                println!("{}", String::from_utf8_lossy(&response).replace('"', ""));
+            }
         }
         Ok(())
     }
 
-    pub fn upload_file<P: AsRef<Path>>(
-        self: &mut Self,
-        loc: UploadLocation,
-        file: P,
-        dest: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let data = fs::read(file.as_ref())?;
-        let size = data.len();
-        let data_format = "B"; // todo support other formats:  B (raw binary format), C (AR compressed), and P (hexadecimal format PNG data)
-        let dest_ext = dest.split_once(".").unwrap_or(("", "")).1;
-        let row_bytes = ""; // only applies to images
-        let header = format!("~DY{loc}:{dest},{data_format},{dest_ext},{size},{row_bytes},");
-
-        let mut buffer = header.into_bytes();
-        buffer.extend_from_slice(&data);
-        self.write_bytes(&buffer)
+    pub fn run_zpl(self: &mut Self, zpl: impl IntoZpl) -> Result<(), Error> {
+        Ok(self.write_bytes(&zpl.into_zpl()?)?)
     }
-
-    fn get_stream(self: &mut Self) -> Result<&mut TcpStream, Box<dyn std::error::Error>> {
-        if self.stream.is_none() {
-            let stream = TcpStream::connect(self.addr)?;
-            stream.set_read_timeout(Some(self.timeout))?;
-            self.stream = Some(stream);
-        }
-        Ok(self.stream.as_mut().unwrap())
-    }
-
-    fn write_bytes(self: &mut Self, bs: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+    */
+    pub fn write_bytes(self: &mut Self, bs: &[u8]) -> Result<(), Error> {
         let stream = self.get_stream()?;
 
         stream.write(bs)?;
@@ -66,7 +45,7 @@ impl Printer {
         Ok(())
     }
 
-    fn read_bytes(self: &mut Self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    pub fn read_bytes(self: &mut Self) -> Result<Vec<u8>, Error> {
         let stream = self.get_stream()?;
         let mut res = Vec::new();
         let mut buf = [0; 1024];
@@ -81,7 +60,7 @@ impl Printer {
                 }
                 Ok(n) => res.extend_from_slice(&buf[..n]),
                 Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    println!("Read timeout reached.");
+                    dbg!("Read timeout reached.");
                     break;
                 }
                 Err(e) => return Err(e.into()),
@@ -89,5 +68,14 @@ impl Printer {
             stream.read(&mut buf)?;
         }
         return Ok(res);
+    }
+
+    fn get_stream(self: &mut Self) -> Result<&mut TcpStream, Error> {
+        if self.stream.is_none() {
+            let stream = TcpStream::connect(self.addr)?;
+            stream.set_read_timeout(Some(self.timeout))?;
+            self.stream = Some(stream);
+        }
+        Ok(self.stream.as_mut().unwrap())
     }
 }

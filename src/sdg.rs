@@ -1,40 +1,48 @@
-use clap::Subcommand;
+use clap::Args;
 
-#[derive(Subcommand, Debug)]
-pub enum SdgCommand {
-    Get {
-        /// The key of the SDG get variable.
-        key: String,
-    },
-    Set {
-        /// The key of the SDG get variable.
-        key: String,
-        /// The value to set the key at.
-        value: String,
-    },
-    Do {
-        /// The name of the operation to perform
-        key: String,
-        #[clap(default_value = "")]
-        value: Option<String>,
-    },
+use crate::IntoSgd;
+
+#[derive(Debug, Args)]
+pub struct SdgGet {
+    /// The key of the SDG get variable.
+    pub key: String,
 }
-impl std::fmt::Display for SdgCommand {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Get { key } => {
-                write!(f, "! U1 getvar \"{key}\"\r\n")
-            }
-            Self::Set { key, value } => {
-                write!(f, "! U1 setvar \"{key}\" \"{value}\"\r\n")
-            }
-            Self::Do { key, value } => {
-                write!(
-                    f,
-                    "! U1 do \"{key}\" \"{}\"\r\n",
-                    value.as_deref().unwrap_or("")
-                )
-            }
-        }
+
+impl IntoSgd for SdgGet {
+    fn into_sgd(self: Self) -> Vec<u8> {
+        format!("! U1 getvar \"{}\"\r\n", self.key).into_bytes()
+    }
+}
+
+#[derive(Debug, Args)]
+pub struct SdgSet {
+    /// The key of the SDG set variable.
+    pub key: String,
+    /// The value to set the key at.
+    pub value: String,
+}
+
+impl IntoSgd for SdgSet {
+    fn into_sgd(self: Self) -> Vec<u8> {
+        format!("! U1 setvar \"{}\" \"{}\"\r\n", self.key, self.value).into_bytes()
+    }
+}
+
+#[derive(Debug, Args)]
+pub struct SdgDo {
+    /// The name of the operation to perform
+    pub key: String,
+    #[clap(default_value = "")]
+    pub value: Option<String>,
+}
+
+impl IntoSgd for SdgDo {
+    fn into_sgd(self: Self) -> Vec<u8> {
+        format!(
+            "! U1 do \"{}\" \"{}\"\r\n",
+            self.key,
+            self.value.as_deref().unwrap_or("")
+        )
+        .into_bytes()
     }
 }

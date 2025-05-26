@@ -1,10 +1,13 @@
-use crate::{sdg::SdgCommand, upload::UploadCommand};
+use crate::{
+    sdg::{SdgDo, SdgGet, SdgSet},
+    upload::UploadCommand,
+};
 use clap::{Parser, Subcommand};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug)]
 pub struct Cli {
-    /// The hostname of the printer.
+    /// The address of the printer.
     #[arg(long)]
     #[clap(default_value = "192.168.0.40:9100")]
     pub addr: SocketAddr,
@@ -18,8 +21,9 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    #[command(subcommand)]
-    Sdg(SdgCommand),
+    Get(SdgGet),
+    Set(SdgSet),
+    Do(SdgDo),
     #[command(subcommand)]
     Upload(UploadCommand),
 }
