@@ -13,7 +13,7 @@ use std::net::SocketAddr;
 )]
 pub struct Cli {
     /// The address of the printer.
-    #[arg(long)]
+    #[arg(long, short)]
     #[clap(default_value = "192.168.0.40:9100")]
     pub addr: SocketAddr,
     /// Timeout in seconds for network operations.
