@@ -8,7 +8,7 @@ use std::net::SocketAddr;
 #[derive(Parser, Debug)]
 #[command(
     name = "Zebra Utilities for Linux Users",
-    version = "0.0.0",
+    version = "0.1.0",
     about = "A small cli to make interacting with zebra printers on linux slightly less annoying."
 )]
 pub struct Cli {

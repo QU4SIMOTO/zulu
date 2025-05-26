@@ -63,6 +63,13 @@ pub struct UploadSslCommand {
     pub cert: PathBuf,
     /// Path to key file.
     pub key: PathBuf,
+    /// The port to set https to listen to on the printer.
+    #[arg(long, short)]
+    #[clap(default_value = "443")]
+    pub port: u16,
+    /// Do NOT reset the printer after the operation.
+    #[arg(long = "no-reset", action = clap::ArgAction::SetFalse, default_value_t = true)]
+    pub reset: bool,
 }
 
 impl IntoZpl for UploadSslCommand {
@@ -93,7 +100,9 @@ impl IntoZpl for UploadSslCommand {
 
 #[derive(Subcommand, Debug)]
 pub enum UploadCommand {
+    #[command(about = "Upload a file to the printer.")]
     File(UploadFileCommand),
+    #[command(about = "Upload ssl certs and configure the printer to enable ssl.")]
     Ssl(UploadSslCommand),
 }
 
