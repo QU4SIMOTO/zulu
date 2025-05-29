@@ -51,6 +51,7 @@ impl IntoZpl for UploadFileCommand {
         let mut buffer = header.into_bytes();
         buffer.extend_from_slice(&data);
         buffer.extend_from_slice(b"\r\n");
+        dbg!(&buffer);
         Ok(buffer)
     }
 }
@@ -76,19 +77,19 @@ impl IntoZpl for UploadSslCommand {
     fn into_zpl(self: Self) -> Result<Vec<u8>, Error> {
         Ok([
             UploadFileCommand {
-                loc: UploadLocation::B,
+                loc: UploadLocation::E,
                 file: self.ca,
                 dest: "HTTPS_CA.NRD".into(),
             }
             .into_zpl()?,
             UploadFileCommand {
-                loc: UploadLocation::B,
+                loc: UploadLocation::E,
                 file: self.cert,
                 dest: "HTTPS_CERT.NRD".into(),
             }
             .into_zpl()?,
             UploadFileCommand {
-                loc: UploadLocation::B,
+                loc: UploadLocation::E,
                 file: self.key,
                 dest: "HTTPS_KEY.NRD".into(),
             }

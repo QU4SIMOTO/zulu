@@ -6,7 +6,7 @@ Annoyed at netcatting SDG and ZPL commands to ZD421 on linux, so very small cli 
 
 In the future I may add some of the tools from the official zebra utilities app on windows and support other means of comunication to the printer such as usb.
 
-## Ussage
+## Usage
 ```
 A small cli to make interacting with zebra printers on linux slightly less annoying.
 
