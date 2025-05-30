@@ -51,7 +51,6 @@ impl IntoZpl for UploadFileCommand {
         let mut buffer = header.into_bytes();
         buffer.extend_from_slice(&data);
         buffer.extend_from_slice(b"\r\n");
-        dbg!(&buffer);
         Ok(buffer)
     }
 }
