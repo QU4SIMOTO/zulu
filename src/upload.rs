@@ -27,7 +27,7 @@ impl std::fmt::Display for UploadLocation {
 #[derive(Debug, clap::Args)]
 pub struct UploadFileCommand {
     /// Device location on the device to write the file to: r ram, e flash, b PCMCIA
-    #[arg(short, long, value_enum, default_value_t = UploadLocation::B)]
+    #[arg(short, long, value_enum, default_value_t = UploadLocation::E)]
     pub loc: UploadLocation,
 
     /// The path of the file to upload.
