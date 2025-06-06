@@ -1,8 +1,8 @@
+use crate::IntoZpl;
+use anyhow::{Context, Result};
 use clap::{Subcommand, ValueEnum};
 use std::fs;
 use std::path::PathBuf;
-
-use crate::{Error, IntoZpl};
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum UploadLocation {
@@ -38,8 +38,9 @@ pub struct UploadFileCommand {
 }
 
 impl IntoZpl for UploadFileCommand {
-    fn into_zpl(self: Self) -> Result<Vec<u8>, Error> {
-        let data = fs::read(&self.file)?;
+    fn into_zpl(self: Self) -> Result<Vec<u8>> {
+        let data =
+            fs::read(&self.file).with_context(|| format!("reading input file {:?}", self.file))?;
         let size = data.len();
         let data_format = "B"; // todo support other formats:  B (raw binary format), C (AR compressed), and P (hexadecimal format PNG data)
         let dest_ext = self.dest.split(".").last().unwrap_or("");
@@ -73,26 +74,29 @@ pub struct UploadSslCommand {
 }
 
 impl IntoZpl for UploadSslCommand {
-    fn into_zpl(self: Self) -> Result<Vec<u8>, Error> {
+    fn into_zpl(self: Self) -> Result<Vec<u8>> {
         Ok([
             UploadFileCommand {
                 loc: UploadLocation::E,
                 file: self.ca,
                 dest: "HTTPS_CA.NRD".into(),
             }
-            .into_zpl()?,
+            .into_zpl()
+            .context("ca file")?,
             UploadFileCommand {
                 loc: UploadLocation::E,
                 file: self.cert,
                 dest: "HTTPS_CERT.NRD".into(),
             }
-            .into_zpl()?,
+            .into_zpl()
+            .context("crt file")?,
             UploadFileCommand {
                 loc: UploadLocation::E,
                 file: self.key,
                 dest: "HTTPS_KEY.NRD".into(),
             }
-            .into_zpl()?,
+            .into_zpl()
+            .context("key file")?,
         ]
         .concat())
     }
@@ -107,7 +111,7 @@ pub enum UploadCommand {
 }
 
 impl IntoZpl for UploadCommand {
-    fn into_zpl(self: Self) -> Result<Vec<u8>, Error> {
+    fn into_zpl(self: Self) -> Result<Vec<u8>> {
         match self {
             Self::File(c) => c.into_zpl(),
             Self::Ssl(c) => c.into_zpl(),

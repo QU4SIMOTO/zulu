@@ -1,4 +1,3 @@
-use crate::Error;
 use std::{
     io::{Read, Write},
     net::{SocketAddr, TcpStream},
@@ -20,15 +19,15 @@ impl Printer {
         }
     }
 
-    pub fn write_bytes(self: &mut Self, bs: &[u8]) -> Result<(), Error> {
+    pub fn write_bytes(self: &mut Self, buf: &[u8]) -> Result<(), std::io::Error> {
         let stream = self.get_stream()?;
 
-        stream.write(bs)?;
+        stream.write(buf)?;
         stream.flush()?;
         Ok(())
     }
 
-    pub fn read_bytes(self: &mut Self) -> Result<Vec<u8>, Error> {
+    pub fn read_bytes(self: &mut Self) -> Result<Vec<u8>, std::io::Error> {
         let stream = self.get_stream()?;
         let mut res = Vec::new();
         let mut buf = [0; 1024];
@@ -53,10 +52,11 @@ impl Printer {
         return Ok(res);
     }
 
-    fn get_stream(self: &mut Self) -> Result<&mut TcpStream, Error> {
+    fn get_stream(self: &mut Self) -> Result<&mut TcpStream, std::io::Error> {
         if self.stream.is_none() {
             let stream = TcpStream::connect(self.addr)?;
             stream.set_read_timeout(Some(self.timeout))?;
+            stream.set_write_timeout(Some(self.timeout))?;
             self.stream = Some(stream);
         }
         Ok(self.stream.as_mut().unwrap())
