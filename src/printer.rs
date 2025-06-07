@@ -47,7 +47,7 @@ impl Printer {
                     res.extend_from_slice(&buf[..n]);
                     // NOTE: may need to be smarter about this.
                     if buf[n - 1] == b'"' {
-                        trace!("read '\"' delim finishing read");
+                        trace!("read '\"' delim, assumed end of response");
                         break;
                     }
                 }

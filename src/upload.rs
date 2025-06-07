@@ -1,4 +1,4 @@
-use crate::IntoZpl;
+use crate::AsZpl;
 use anyhow::{Context, Result};
 use clap::{Subcommand, ValueEnum};
 use std::fs;
@@ -38,8 +38,8 @@ pub struct UploadFileCommand {
     pub dest: String,
 }
 
-impl IntoZpl for UploadFileCommand {
-    fn into_zpl(self: Self) -> Result<Vec<u8>> {
+impl AsZpl for UploadFileCommand {
+    fn as_zpl(self: &Self) -> Result<Vec<u8>> {
         let data =
             fs::read(&self.file).with_context(|| format!("reading input file {:?}", self.file))?;
         trace!("Read file {:?}", self.file);
@@ -77,29 +77,29 @@ pub struct UploadSslCommand {
     pub reset: bool,
 }
 
-impl IntoZpl for UploadSslCommand {
-    fn into_zpl(self: Self) -> Result<Vec<u8>> {
+impl AsZpl for UploadSslCommand {
+    fn as_zpl(self: &Self) -> Result<Vec<u8>> {
         Ok([
             UploadFileCommand {
                 loc: UploadLocation::E,
-                file: self.ca,
+                file: self.ca.clone(),
                 dest: "HTTPS_CA.NRD".into(),
             }
-            .into_zpl()
+            .as_zpl()
             .context("ca file")?,
             UploadFileCommand {
                 loc: UploadLocation::E,
-                file: self.cert,
+                file: self.cert.clone(),
                 dest: "HTTPS_CERT.NRD".into(),
             }
-            .into_zpl()
+            .as_zpl()
             .context("crt file")?,
             UploadFileCommand {
                 loc: UploadLocation::E,
-                file: self.key,
+                file: self.key.clone(),
                 dest: "HTTPS_KEY.NRD".into(),
             }
-            .into_zpl()
+            .as_zpl()
             .context("key file")?,
         ]
         .concat())
@@ -114,11 +114,11 @@ pub enum UploadCommand {
     Ssl(UploadSslCommand),
 }
 
-impl IntoZpl for UploadCommand {
-    fn into_zpl(self: Self) -> Result<Vec<u8>> {
+impl AsZpl for UploadCommand {
+    fn as_zpl(self: &Self) -> Result<Vec<u8>> {
         match self {
-            Self::File(c) => c.into_zpl(),
-            Self::Ssl(c) => c.into_zpl(),
+            Self::File(c) => c.as_zpl(),
+            Self::Ssl(c) => c.as_zpl(),
         }
     }
 }

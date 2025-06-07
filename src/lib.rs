@@ -5,10 +5,10 @@ pub mod printer;
 pub mod sdg;
 pub mod upload;
 
-pub trait IntoZpl {
-    fn into_zpl(self: Self) -> Result<Vec<u8>>;
+pub trait AsZpl {
+    fn as_zpl(self: &Self) -> Result<Vec<u8>>;
 }
 
-pub trait IntoSgd {
-    fn into_sgd(self: Self) -> Vec<u8>;
+pub trait AsSgd {
+    fn as_sgd(self: &Self) -> Vec<u8>;
 }

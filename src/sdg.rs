@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::IntoSgd;
+use crate::AsSgd;
 
 #[derive(Debug, Args)]
 pub struct SdgGet {
@@ -8,8 +8,8 @@ pub struct SdgGet {
     pub key: String,
 }
 
-impl IntoSgd for SdgGet {
-    fn into_sgd(self: Self) -> Vec<u8> {
+impl AsSgd for SdgGet {
+    fn as_sgd(self: &Self) -> Vec<u8> {
         format!("! U1 getvar \"{}\"\r\n", self.key).into_bytes()
     }
 }
@@ -22,8 +22,8 @@ pub struct SdgSet {
     pub value: String,
 }
 
-impl IntoSgd for SdgSet {
-    fn into_sgd(self: Self) -> Vec<u8> {
+impl AsSgd for SdgSet {
+    fn as_sgd(self: &Self) -> Vec<u8> {
         format!("! U1 setvar \"{}\" \"{}\"\r\n", self.key, self.value).into_bytes()
     }
 }
@@ -36,8 +36,8 @@ pub struct SdgDo {
     pub value: Option<String>,
 }
 
-impl IntoSgd for SdgDo {
-    fn into_sgd(self: Self) -> Vec<u8> {
+impl AsSgd for SdgDo {
+    fn as_sgd(self: &Self) -> Vec<u8> {
         format!(
             "! U1 do \"{}\" \"{}\"\r\n",
             self.key,
