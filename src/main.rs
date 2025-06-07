@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use zulu::{
     cli::{Cli, Command},
@@ -12,6 +12,9 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     let mut printer = Printer::new(cli.addr, cli.timeout);
+    if cli.usb {
+        return Err(anyhow!("Usb connection type is not supported yet"));
+    }
     match cli.command {
         Command::Get(c) => {
             printer

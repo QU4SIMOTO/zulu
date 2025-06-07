@@ -2,7 +2,7 @@ use crate::{
     sdg::{SdgDo, SdgGet, SdgSet},
     upload::UploadCommand,
 };
-use clap::{Parser, Subcommand};
+use clap::{ArgGroup, Parser, Subcommand};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug)]
@@ -11,11 +11,18 @@ use std::net::SocketAddr;
     version = "0.1.0",
     about = "A small cli to make interacting with zebra printers on linux slightly less annoying."
 )]
+#[command(group(
+    ArgGroup::new("connection")
+        .args(["addr", "usb"])
+))]
 pub struct Cli {
     /// The address of the printer.
-    #[arg(long, short)]
+    #[arg(long)]
     #[clap(default_value = "192.168.0.40:9100")]
     pub addr: SocketAddr,
+    /// Connect to printer using usb. NOT SUPPORTED currently
+    #[arg(long)]
+    pub usb: bool,
     /// Timeout in seconds for network operations.
     #[arg(long, short)]
     #[clap(default_value_t = 5)]
