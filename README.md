@@ -46,6 +46,6 @@ zulu do device.reset
 ## Installation
 To install using cargo:
 ```
-cargo install --git https://github.com/QU4SIMOT/zulu
+cargo install --git https://github.com/QU4SIMOTO/zulu
 ```
 
