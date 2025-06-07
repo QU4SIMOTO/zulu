@@ -1,5 +1,4 @@
-use crate::AsZpl;
-use anyhow::{Context, Result};
+use anyhow::Context;
 use clap::{Subcommand, ValueEnum};
 use std::fs;
 use std::path::PathBuf;
@@ -38,8 +37,16 @@ pub struct UploadFileCommand {
     pub dest: String,
 }
 
-impl AsZpl for UploadFileCommand {
-    fn as_zpl(self: &Self) -> Result<Vec<u8>> {
+impl UploadFileCommand {
+    pub fn new(loc: UploadLocation, file: std::path::PathBuf, dest: String) -> Self {
+        Self { loc, file, dest }
+    }
+}
+
+impl TryInto<Vec<u8>> for &UploadFileCommand {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> std::result::Result<Vec<u8>, Self::Error> {
         let data =
             fs::read(&self.file).with_context(|| format!("reading input file {:?}", self.file))?;
         trace!("Read file {:?}", self.file);
@@ -60,6 +67,14 @@ impl AsZpl for UploadFileCommand {
     }
 }
 
+impl TryInto<Vec<u8>> for UploadFileCommand {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        TryInto::<Vec<u8>>::try_into(&self)
+    }
+}
+
 #[derive(Debug, clap::Args)]
 pub struct UploadSslCommand {
     /// Path to CA file.
@@ -77,48 +92,10 @@ pub struct UploadSslCommand {
     pub reset: bool,
 }
 
-impl AsZpl for UploadSslCommand {
-    fn as_zpl(self: &Self) -> Result<Vec<u8>> {
-        Ok([
-            UploadFileCommand {
-                loc: UploadLocation::E,
-                file: self.ca.clone(),
-                dest: "HTTPS_CA.NRD".into(),
-            }
-            .as_zpl()
-            .context("ca file")?,
-            UploadFileCommand {
-                loc: UploadLocation::E,
-                file: self.cert.clone(),
-                dest: "HTTPS_CERT.NRD".into(),
-            }
-            .as_zpl()
-            .context("crt file")?,
-            UploadFileCommand {
-                loc: UploadLocation::E,
-                file: self.key.clone(),
-                dest: "HTTPS_KEY.NRD".into(),
-            }
-            .as_zpl()
-            .context("key file")?,
-        ]
-        .concat())
-    }
-}
-
 #[derive(Subcommand, Debug)]
 pub enum UploadCommand {
     #[command(about = "Upload a file to the printer.")]
     File(UploadFileCommand),
     #[command(about = "Upload ssl certs and configure the printer to enable ssl.")]
     Ssl(UploadSslCommand),
-}
-
-impl AsZpl for UploadCommand {
-    fn as_zpl(self: &Self) -> Result<Vec<u8>> {
-        match self {
-            Self::File(c) => c.as_zpl(),
-            Self::Ssl(c) => c.as_zpl(),
-        }
-    }
 }

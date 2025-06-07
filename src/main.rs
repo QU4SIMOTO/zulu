@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use tracing_subscriber::EnvFilter;
-use zulu::{cli::Cli, printer::Printer};
+use zulu::{printer::Printer, Cli};
 
 fn init_tracing(log_level: u8) {
     tracing_subscriber::fmt()

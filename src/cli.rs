@@ -1,8 +1,7 @@
 use crate::{
     printer::Printer,
     sdg::{SdgDo, SdgGet, SdgSet},
-    upload::{UploadCommand, UploadFileCommand, UploadSslCommand},
-    AsSgd, AsZpl,
+    upload::{UploadCommand, UploadFileCommand, UploadLocation, UploadSslCommand},
 };
 use anyhow::{anyhow, Context, Result};
 use clap::{ArgAction, ArgGroup, Parser, Subcommand};
@@ -55,25 +54,23 @@ pub enum Command {
 }
 
 impl Cli {
-    pub fn run(&self, printer: Printer) -> Result<()> {
+    pub fn run(&self, mut printer: Printer) -> Result<()> {
         if self.usb {
             return Err(anyhow!("Usb connection type is not supported yet"));
         }
         match &self.command {
-            Command::Get(c) => self.run_sdg_get(&c, printer),
-            Command::Set(c) => self.run_sdg_set(&c, printer),
-            Command::Do(c) => self.run_sdg_do(&c, printer),
+            Command::Get(c) => self.run_sdg_get(&c, &mut printer),
+            Command::Set(c) => self.run_sdg_set(&c, &mut printer),
+            Command::Do(c) => self.run_sdg_do(&c, &mut printer),
             Command::Upload(c) => match c {
-                UploadCommand::File(c) => self.run_upload_file(&c, printer),
-                UploadCommand::Ssl(c) => self.run_upload_ssl(&c, printer),
+                UploadCommand::File(c) => self.run_upload_file(&c, &mut printer),
+                UploadCommand::Ssl(c) => self.run_upload_ssl(&c, &mut printer),
             },
         }
     }
 
-    fn run_sdg_get(&self, c: &SdgGet, mut printer: Printer) -> Result<()> {
-        printer
-            .write_bytes(&c.as_sgd())
-            .context("writing get command")?;
+    fn run_sdg_get(&self, c: &SdgGet, printer: &mut Printer) -> Result<()> {
+        printer.write_bytes(c).context("writing get command")?;
         let response = printer.read_bytes().context("reading command response")?;
         if response.len() > 0 {
             println!("{}", String::from_utf8_lossy(&response).replace('"', ""));
@@ -81,70 +78,64 @@ impl Cli {
         Ok(())
     }
 
-    fn run_sdg_set(&self, c: &SdgSet, mut printer: Printer) -> Result<()> {
+    fn run_sdg_set(&self, c: &SdgSet, printer: &mut Printer) -> Result<()> {
         printer
-            .write_bytes(&c.as_sgd())
+            .write_bytes(Into::<Vec<u8>>::into(c))
             .context("writing set command")
     }
 
-    fn run_sdg_do(&self, c: &SdgDo, mut printer: Printer) -> Result<()> {
-        printer
-            .write_bytes(&c.as_sgd())
-            .context("writiing do command")
+    fn run_sdg_do(&self, c: &SdgDo, printer: &mut Printer) -> Result<()> {
+        printer.write_bytes(c).context("writiing do command")
     }
 
-    fn run_upload_file(&self, c: &UploadFileCommand, mut printer: Printer) -> Result<()> {
-        printer
-            .write_bytes(&c.as_zpl().context("reading upload file")?)
-            .context("writing file to printer")
+    fn run_upload_file(&self, c: &UploadFileCommand, printer: &mut Printer) -> Result<()> {
+        let buff: Vec<_> = c.try_into().context("reading file")?;
+        printer.write_bytes(buff).context("writing file to printer")
     }
 
-    fn run_upload_ssl(&self, c: &UploadSslCommand, mut printer: Printer) -> Result<()> {
+    fn run_upload_ssl(&self, c: &UploadSslCommand, printer: &mut Printer) -> Result<()> {
         let https_port = c.port;
         let should_reset = c.reset;
 
-        info!("Writing ssl certs");
-        printer
-            .write_bytes(&c.as_zpl().context("reading ssl file")?)
-            .context("writing file to printer")?;
+        info!("uploading ssl certs");
+
+        info!("uploading ca file");
+        self.run_upload_file(
+            &UploadFileCommand::new(UploadLocation::E, c.ca.clone(), "HTTPS_CA.NRD".into()),
+            printer,
+        )
+        .context("ca file")?;
+
+        info!("uploading cert file");
+        self.run_upload_file(
+            &UploadFileCommand::new(UploadLocation::E, c.cert.clone(), "HTTPS_CERT.NRD".into()),
+            printer,
+        )
+        .context("cert file")?;
+
+        info!("uploading key file");
+        self.run_upload_file(
+            &UploadFileCommand::new(UploadLocation::E, c.key.clone(), "HTTPS_KEY.NRD".into()),
+            printer,
+        )
+        .context("key file")?;
 
         info!("Enabling https setting");
-        printer
-            .write_bytes(
-                &SdgSet {
-                    key: "ip.https.enable".into(),
-                    value: "on".into(),
-                }
-                .as_sgd(),
-            )
+        self.run_sdg_set(&SdgSet::new("ip.https.enable", "on"), printer)
             .context("enabling https setting")?;
 
         let https_port = https_port.to_string();
         info!("Setting https port to {https_port}");
-        printer
-            .write_bytes(
-                &SdgSet {
-                    key: "ip.https.port".into(),
-                    value: https_port,
-                }
-                .as_sgd(),
-            )
+        self.run_sdg_set(&SdgSet::new("ip.https.port", https_port), printer)
             .context("setting https port")?;
 
         if should_reset {
             info!("resetting printer");
-            printer
-                .write_bytes(
-                    &SdgDo {
-                        key: "device.reset".into(),
-                        value: None,
-                    }
-                    .as_sgd(),
-                )
-                .context("restarting printer")?;
+            self.run_sdg_do(&SdgDo::new("device.reset", None), printer)
+                .context("restarting printer")
         } else {
             warn!("skipping reset, updated settings won't apply until the printer is reset.");
+            Ok(())
         }
-        Ok(())
     }
 }

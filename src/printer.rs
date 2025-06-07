@@ -21,11 +21,12 @@ impl Printer {
         }
     }
 
-    pub fn write_bytes(self: &mut Self, buf: &[u8]) -> Result<(), std::io::Error> {
+    pub fn write_bytes(self: &mut Self, buf: impl Into<Vec<u8>>) -> Result<(), std::io::Error> {
+        let buf = buf.into();
         let stream = self.get_stream()?;
         trace!("Writing bytes to socket");
         debug!("data: {buf:?}");
-        stream.write(buf)?;
+        stream.write(&buf)?;
         stream.flush()?;
         Ok(())
     }
