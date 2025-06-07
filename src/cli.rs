@@ -2,7 +2,7 @@ use crate::{
     sdg::{SdgDo, SdgGet, SdgSet},
     upload::UploadCommand,
 };
-use clap::{ArgGroup, Parser, Subcommand};
+use clap::{ArgAction, ArgGroup, Parser, Subcommand};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug)]
@@ -27,6 +27,9 @@ pub struct Cli {
     #[arg(long, short)]
     #[clap(default_value_t = 5)]
     pub timeout: u64,
+    /// Increase verbosity (-v, -vv, -vvv)
+    #[arg(short, long, action = ArgAction::Count)]
+    pub verbose: u8,
     /// The subcommand to execute.
     #[command(subcommand)]
     pub command: Command,

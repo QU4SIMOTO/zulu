@@ -3,6 +3,7 @@ use anyhow::{Context, Result};
 use clap::{Subcommand, ValueEnum};
 use std::fs;
 use std::path::PathBuf;
+use tracing::{debug, trace};
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum UploadLocation {
@@ -41,6 +42,8 @@ impl IntoZpl for UploadFileCommand {
     fn into_zpl(self: Self) -> Result<Vec<u8>> {
         let data =
             fs::read(&self.file).with_context(|| format!("reading input file {:?}", self.file))?;
+        trace!("Read file {:?}", self.file);
+
         let size = data.len();
         let data_format = "B"; // todo support other formats:  B (raw binary format), C (AR compressed), and P (hexadecimal format PNG data)
         let dest_ext = self.dest.split(".").last().unwrap_or("");
@@ -49,10 +52,11 @@ impl IntoZpl for UploadFileCommand {
             "~DY{}:{},{data_format},{dest_ext},{size},{row_bytes},",
             self.loc, self.dest
         );
-        let mut buffer = header.into_bytes();
-        buffer.extend_from_slice(&data);
-        buffer.extend_from_slice(b"\r\n");
-        Ok(buffer)
+        let mut buf = header.into_bytes();
+        buf.extend_from_slice(&data);
+        buf.extend_from_slice(b"\r\n");
+        debug!("upload file write data: {buf:?}");
+        Ok(buf)
     }
 }
 

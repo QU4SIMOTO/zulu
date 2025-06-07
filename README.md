@@ -20,8 +20,10 @@ Commands:
   help    Print this message or the help of the given subcommand(s)
 
 Options:
-  -a, --addr <ADDR>        The address of the printer [default: 192.168.0.40:9100]
+      --addr <ADDR>        The address of the printer [default: 192.168.0.40:9100]
+      --usb                Connect to printer using usb. NOT SUPPORTED currently
   -t, --timeout <TIMEOUT>  Timeout in seconds for network operations [default: 5]
+  -v, --verbose...         Increase verbosity (-v, -vv, -vvv)
   -h, --help               Print help
   -V, --version            Print version
 ```
