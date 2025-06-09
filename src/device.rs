@@ -6,13 +6,13 @@ use std::{
 
 use tracing::{debug, trace};
 
-pub struct Printer {
+pub struct Device {
     addr: SocketAddr,
     timeout: Duration,
     stream: Option<TcpStream>,
 }
 
-impl Printer {
+impl Device {
     pub fn new(addr: SocketAddr, timeout: u64) -> Self {
         Self {
             addr,

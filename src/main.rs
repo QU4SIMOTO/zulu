@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use tracing_subscriber::fmt::writer::BoxMakeWriter;
 use tracing_subscriber::EnvFilter;
-use zulu::{printer::Printer, Cli};
+use zulu::{Cli, Device};
 
 fn init_tracing(log_level: u8) {
     let writer = BoxMakeWriter::new(std::io::stderr);
@@ -20,5 +20,5 @@ fn init_tracing(log_level: u8) {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     init_tracing(cli.verbose);
-    cli.run(Printer::new(cli.addr, cli.timeout))
+    cli.run(Device::new(cli.addr, cli.timeout))
 }
