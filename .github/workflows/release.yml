@@ -8,15 +8,25 @@ on:
 jobs:
   build:
     name: Build Release Binaries
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        target: [x86_64-unknown-linux-gnu, x86_64-apple-darwin, x86_64-pc-windows-gnu]
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+
+      - name: Install dependencies for Windows target
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -31,11 +41,15 @@ jobs:
       - name: Package binary
         shell: bash
         run: |
-          mkdir dist
-          BIN_NAME=$(basename $(pwd))  # Adjust if binary name differs
-          cp target/${{ matrix.target }}/release/$BIN_NAME dist/${BIN_NAME}-${{ matrix.target }}
+          mkdir -p dist
+          BIN_NAME=$(basename $(pwd))  # Assumes binary name == repo name
+          EXT=""
+          if [[ "${{ matrix.target }}" == *windows* ]]; then
+            EXT=".exe"
+          fi
+          cp target/${{ matrix.target }}/release/$BIN_NAME$EXT dist/${BIN_NAME}-${{ matrix.target }}$EXT
           cd dist
-          zip ${BIN_NAME}-${{ matrix.target }}.zip ${BIN_NAME}-${{ matrix.target }}
+          zip ${BIN_NAME}-${{ matrix.target }}.zip ${BIN_NAME}-${{ matrix.target }}$EXT
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
